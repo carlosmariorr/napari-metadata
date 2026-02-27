@@ -53,6 +53,7 @@ dev = [
     "coverage>7",
     "pytest-qt",
     "tox-uv",
+    "pre-commit",
 ]
 docs = [
     "sphinx>6",
