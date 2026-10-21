@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
 from napari.components._viewer_constants import CanvasPosition
 
 from napari_metadata.viewer_widgets._base import ViewerComponentBase
@@ -17,7 +18,13 @@ from napari_metadata.viewer_widgets._scale_bar import (
     ScaleBarPosition,
     ScaleBarTicks,
     ScaleBarVisible,
+    _supports_auto_box_color,
     get_scale_bar,
+)
+
+requires_auto_box_color = pytest.mark.skipif(
+    not _supports_auto_box_color(),
+    reason='automatic box color (box_color=None) was added in napari 0.7.0',
 )
 
 
@@ -261,6 +268,7 @@ class TestScaleBarBox:
 
         assert component.value_widgets[0].isChecked() is True
 
+    @requires_auto_box_color
     def test_load_entries_checks_auto_when_box_color_none(
         self, viewer_model, parent_widget
     ):
@@ -281,6 +289,7 @@ class TestScaleBarBox:
 
         assert get_scale_bar(viewer_model).box is True
 
+    @requires_auto_box_color
     def test_auto_checkbox_sets_box_color_to_none(
         self, viewer_model, parent_widget
     ):
@@ -292,6 +301,18 @@ class TestScaleBarBox:
         component.value_widgets[2].setChecked(True)
 
         assert get_scale_bar(viewer_model).box_color is None
+
+    def test_no_auto_checkbox_without_napari_support(
+        self, viewer_model, parent_widget, monkeypatch
+    ):
+        monkeypatch.setattr(
+            'napari_metadata.viewer_widgets._scale_bar._supports_auto_box_color',
+            lambda: False,
+        )
+        component = ScaleBarBox(viewer_model, parent_widget)
+        component.load_entries()
+
+        assert len(component.value_widgets) == 2
 
     def test_clear_resets_toggle_to_off(self, viewer_model, parent_widget):
         get_scale_bar(viewer_model).box = True
